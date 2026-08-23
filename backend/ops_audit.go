@@ -30,7 +30,7 @@ func (a *OpsAudit) For(recordID string) []OpsEvent {
 	out := []OpsEvent{}
 	for _, event := range a.events {
 		if event.RecordID == recordID {
-			out = append(out, event)
+			out = append(out, event.Clone())
 		}
 	}
 	return out
@@ -42,7 +42,7 @@ func (a *OpsAudit) Since(start time.Time) []OpsEvent {
 	for _, event := range a.events {
 		parsed, err := time.Parse(time.RFC3339Nano, event.At)
 		if err == nil && !parsed.Before(start) {
-			out = append(out, event)
+			out = append(out, event.Clone())
 		}
 	}
 	return out
@@ -54,6 +54,6 @@ func (a *OpsAudit) Latest() (OpsEvent, bool) {
 	if len(a.events) == 0 {
 		return OpsEvent{}, false
 	}
-	return a.events[len(a.events)-1], true
+	return a.events[len(a.events)-1].Clone(), true
 }
 func (a *OpsAudit) Clear() { a.mu.Lock(); defer a.mu.Unlock(); a.events = a.events[:0] }

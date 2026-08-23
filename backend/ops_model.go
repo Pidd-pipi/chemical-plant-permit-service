@@ -89,6 +89,15 @@ func (r OpsRecord) Clone() OpsRecord {
 	return copy
 }
 
+func (e OpsEvent) Clone() OpsEvent {
+	out := e
+	out.Details = map[string]string{}
+	for key, value := range e.Details {
+		out.Details[key] = value
+	}
+	return out
+}
+
 func (r OpsRecord) LabelValue(key string) string { return r.Labels[key] }
 func (r OpsRecord) Terminal() bool               { return r.Status == OpsStatusClosed }
 

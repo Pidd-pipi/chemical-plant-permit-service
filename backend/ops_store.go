@@ -25,11 +25,15 @@ func (s *OpsStore) Get(ctx context.Context, id string) (OpsRecord, error) {
 		return OpsRecord{}, ctx.Err()
 	default:
 	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	item, ok := s.items[id]
 	if !ok {
 		return OpsRecord{}, ErrOpsNotFound
 	}
-	return item, nil
+	// 深拷贝返回：Labels 是引用类型，调用方拿到后修改不能影响 store 内部状态，
+	// 否则一条记录改标签会串到别的记录上。
+	return item.Clone(), nil
 }
 func (s *OpsStore) List(ctx context.Context) ([]OpsRecord, error) {
 	select {
@@ -37,9 +41,11 @@ func (s *OpsStore) List(ctx context.Context) ([]OpsRecord, error) {
 		return nil, ctx.Err()
 	default:
 	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	out := make([]OpsRecord, 0, len(s.items))
 	for _, item := range s.items {
-		out = append(out, item)
+		out = append(out, item.Clone())
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out, nil
@@ -55,7 +61,8 @@ func (s *OpsStore) Put(ctx context.Context, item OpsRecord) error {
 	if _, ok := s.items[item.ID]; ok {
 		return ErrOpsConflict
 	}
-	s.items[item.ID] = normalizeOpsRecord(item)
+	// Clone 深拷贝 Labels，避免外部传入的 map 与 store 共享引用。
+	s.items[item.ID] = normalizeOpsRecord(item).Clone()
 	return nil
 }
 func (s *OpsStore) Update(ctx context.Context, item OpsRecord, expected int) error {
@@ -92,4 +99,8 @@ func (s *OpsStore) Delete(ctx context.Context, id string) error {
 	delete(s.items, id)
 	return nil
 }
-func (s *OpsStore) Count() int { return len(s.items) }
+func (s *OpsStore) Count() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.items)
+}
