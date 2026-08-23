@@ -17,5 +17,5 @@ func main() {
 	m.Handle("/api/v1/", httpapi.New(store.New()))
 	m.HandleFunc("/", web.Handler)
 	log.Printf("chemical permit service listening on %s", c.Address())
-	log.Fatal(serveAddress(c.Address(), m))
+	log.Fatal(serveAddress(c.Address(), c.ShutdownTimeout, m))
 }
