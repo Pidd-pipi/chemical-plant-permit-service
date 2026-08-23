@@ -14,15 +14,18 @@ type StatusChange struct {
 	Status string `json:"status"`
 }
 
-// SortPermitsByRisk 按风险等级从高到低排序。
+// SortPermitsByRisk 返回按风险等级从高到低排序后的副本，不修改入参切片。
+// 这样每次列表请求都得到确定、稳定的结果，且不会污染库存顺序。
 func SortPermitsByRisk(items []Permit) []Permit {
-	sort.SliceStable(items, func(i, j int) bool {
-		if items[i].RiskLevel != items[j].RiskLevel {
-			return riskWeight(items[i].RiskLevel) > riskWeight(items[j].RiskLevel)
+	out := make([]Permit, len(items))
+	copy(out, items)
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].RiskLevel != out[j].RiskLevel {
+			return riskWeight(out[i].RiskLevel) > riskWeight(out[j].RiskLevel)
 		}
-		return items[i].ID < items[j].ID
+		return out[i].ID < out[j].ID
 	})
-	return items
+	return out
 }
 
 func riskWeight(level string) int {
