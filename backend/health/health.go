@@ -3,6 +3,7 @@ package health
 import (
 	"encoding/json"
 	"net/http"
+	"sync/atomic"
 )
 
 var totalChecks uint64
@@ -13,7 +14,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", 405)
 		return
 	}
-	totalChecks++
+	checks := atomic.AddUint64(&totalChecks, 1)
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]any{"status": "ok", "service": "chemical-plant-permit", "checks": totalChecks})
+	_ = json.NewEncoder(w).Encode(map[string]any{"status": "ok", "service": "chemical-plant-permit", "checks": checks})
 }

@@ -3,13 +3,17 @@ package web
 import (
 	"embed"
 	"net/http"
+	"sync"
 	"time"
 )
 
 //go:embed index.html app.js
 var files embed.FS
 
-var lastRefreshed time.Time
+var (
+	refreshMu      sync.Mutex
+	lastRefreshed  time.Time
+)
 
 // Handler 返回内置页面并记录最近一次刷新时间。
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +21,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	lastRefreshed = time.Now()
-	w.Header().Set("X-Refreshed-At", lastRefreshed.UTC().Format(time.RFC3339))
+	now := time.Now()
+	refreshMu.Lock()
+	lastRefreshed = now
+	stamp := lastRefreshed
+	refreshMu.Unlock()
+	w.Header().Set("X-Refreshed-At", stamp.UTC().Format(time.RFC3339))
 	http.FileServer(http.FS(files)).ServeHTTP(w, r)
 }
