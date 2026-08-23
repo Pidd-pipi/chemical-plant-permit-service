@@ -67,14 +67,14 @@ func opsLastID(p OpsPage) string {
 
 // opsInProgress 判断状态是否属于办理中。
 func opsInProgress(status OpsStatus) bool {
-	return status == OpsStatusQueued || status == OpsStatusActive || status == OpsStatusPaused
+	return status == OpsStatusQueued || status == OpsStatusReview || status == OpsStatusActive || status == OpsStatusPaused
 }
 
 // opsCountInProgress 统计办理中的记录数。
 func opsCountInProgress(items []OpsRecord) int {
 	count := 0
 	for _, item := range items {
-		if item.Status == OpsStatusQueued || item.Status == OpsStatusActive || item.Status == OpsStatusPaused {
+		if opsInProgress(item.Status) {
 			count++
 		}
 	}

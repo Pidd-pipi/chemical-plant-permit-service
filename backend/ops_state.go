@@ -6,8 +6,8 @@ import (
 )
 
 var opsTransitionTable = map[OpsStatus]map[OpsStatus]bool{
-	OpsStatusQueued: {OpsStatusActive: true, OpsStatusClosed: true},
-	OpsStatusReview: {OpsStatusActive: true},
+	OpsStatusQueued: {OpsStatusReview: true, OpsStatusActive: true, OpsStatusClosed: true},
+	OpsStatusReview: {OpsStatusQueued: true, OpsStatusActive: true, OpsStatusClosed: true},
 	OpsStatusActive: {OpsStatusPaused: true, OpsStatusClosed: true},
 	OpsStatusPaused: {OpsStatusActive: true, OpsStatusClosed: true},
 	OpsStatusClosed: {},
