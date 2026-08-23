@@ -77,6 +77,11 @@ func (s *OpsService) Transition(ctx context.Context, id string, expected int, ta
 	if expected > 0 && expected != record.Revision {
 		return OpsRecord{}, ErrOpsConflict
 	}
+	// 记录已处于目标状态：在并发场景下这意味着另一个流转刚刚已生效，
+	// 当前这次是重复提交，按冲突返回，避免「同一张单子并发流转两边都成功」。
+	if record.Status == target {
+		return OpsRecord{}, ErrOpsConflict
+	}
 	if err := s.state.Move(record.Status, target, "operator update"); err != nil {
 		return OpsRecord{}, err
 	}

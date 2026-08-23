@@ -42,8 +42,14 @@ func opsBackoff(attempt int) time.Duration {
 	return time.Duration(1<<uint(attempt-1)) * 20 * time.Millisecond
 }
 func opsDelay(ctx context.Context, duration time.Duration) error {
-	time.Sleep(duration)
-	return nil
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }
 func opsAge(now time.Time, stamp string) time.Duration {
 	parsed, err := opsParseStamp(stamp)
