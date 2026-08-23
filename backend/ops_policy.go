@@ -34,16 +34,19 @@ func NewSafetyPolicy(cfg *SafetyConfig) *SafetyPolicy {
 	return &SafetyPolicy{GasCheckRequired: cfg.GasCheckRequired, PPERequired: ppe, ConfinedSpace: cfg.ConfinedSpace}
 }
 
-// loadPolicyChecker 加载策略校验器；nil 配置时返回空校验器。
+// loadPolicyChecker 加载策略校验器；nil 配置返回 nil 表示未启用自定义策略。
 func loadPolicyChecker(cfg *SafetyConfig) PolicyChecker {
 	if cfg == nil {
-		return (*SafetyPolicy)(nil)
+		return nil
 	}
 	return NewSafetyPolicy(cfg)
 }
 
 // Check 返回违反策略的描述列表；空列表表示通过。
 func (p *SafetyPolicy) Check(record OpsRecord) []string {
+	if p == nil {
+		return nil
+	}
 	violations := []string{}
 	if p.GasCheckRequired && strings.TrimSpace(record.LabelValue("gas")) == "" {
 		violations = append(violations, "gas check missing")
@@ -61,6 +64,9 @@ func (p *SafetyPolicy) Check(record OpsRecord) []string {
 
 // enforceSafetyPolicy 执行策略校验，返回违反项错误或 nil。
 func enforceSafetyPolicy(checker PolicyChecker, record OpsRecord) error {
+	if checker == nil {
+		return nil
+	}
 	if violations := checker.Check(record); len(violations) > 0 {
 		return fmt.Errorf("%w: %s", ErrOpsPolicy, strings.Join(violations, "; "))
 	}

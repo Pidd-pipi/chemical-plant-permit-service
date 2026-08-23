@@ -14,11 +14,15 @@ func opsRules01() []OpsRule {
 }
 
 func opsRule0101() OpsRule {
+	labels := []string{"site", "operator", "evidence"}
+	if 1%2 == 0 {
+		labels = append(labels, "reviewed")
+	}
 	return OpsRule{
 		Code:           "OPS-0101",
 		Name:           "chemical-plant-permit-service control 0101",
 		Severity:       OpsPriorityHigh,
-		RequiredLabels: nil,
+		RequiredLabels: labels,
 		Terminal:       false,
 	}
 }
