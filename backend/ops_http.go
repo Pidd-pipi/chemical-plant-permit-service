@@ -63,6 +63,8 @@ func opsRequestID(r *http.Request) string { return r.Header.Get("X-Request-ID") 
 // opsStatusFromError 把领域错误映射为 HTTP 状态码。
 func opsStatusFromError(err error) int {
 	switch opsCode(err) {
+	case "not_found":
+		return http.StatusNotFound
 	case "conflict":
 		return http.StatusConflict
 	case "invalid":

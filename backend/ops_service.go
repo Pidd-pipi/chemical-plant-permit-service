@@ -51,7 +51,9 @@ func (s *OpsService) Create(ctx context.Context, record OpsRecord) (OpsRecord, e
 func (s *OpsService) Get(ctx context.Context, id string) (OpsRecord, error) {
 	item, err := s.store.Get(ctx, id)
 	if err != nil {
-		return OpsRecord{}, fmt.Errorf("load %s: %v", id, err)
+		// 用 %w 保留错误链，否则 errors.Is(err, ErrOpsNotFound) 会失效，
+		// 上层会把"许可不存在"误判成内部错误并返回 500。
+		return OpsRecord{}, fmt.Errorf("load %s: %w", id, err)
 	}
 	return item, nil
 }
@@ -82,7 +84,8 @@ func (s *OpsService) Transition(ctx context.Context, id string, expected int, ta
 		return OpsRecord{}, ErrOpsConflict
 	}
 	if err := s.state.Move(record.Status, target, "operator update"); err != nil {
-		return OpsRecord{}, fmt.Errorf("transition %s: %v", id, err)
+		// 用 %w 保留 ErrOpsTransition，使上层能映射为 409 而非 500。
+		return OpsRecord{}, fmt.Errorf("transition %s: %w", id, err)
 	}
 	record.Status = target
 	if err := s.store.Update(ctx, record, expected); err != nil {
